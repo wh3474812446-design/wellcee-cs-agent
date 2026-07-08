@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wellcee 智能客服「小Cee」· 高保真原型</title>
+<!--
+  ══════════════════════════════════════════════════════════
+  Wellcee 智能客服 Agent · 高保真交互原型（Step 4 交付物）
+  设计依据：PRD v1.0（03-PRD/）· 品牌规范：brand-spec.md
+  ASSUMPTIONS（Junior 模式声明）：
+   1. 色值从 App 深色模式真机截图提取（±5% 色相误差）
+   2. 「小Cee」命名借用官方社区账号既有 IP 叫法
+   3. iPhone 壳规格移植自 huashu-design/assets/ios_frame.jsx（15 Pro 393×852）
+  五屏对应 PRD 条款：
+   ① 开场+快捷问题（5.2 入口并存 / C5 人设 / 红线·明示AI身份）
+   ② FAQ直答+来源标注（A5 押金托管 / 红线·引知识库原文）
+   ③ 工具调用·押金查询（A6 / US3 / 法务限定语）
+   ④ 举报收集转人工（A9 / US4 / 红线·不下结论）
+   ⑤ English+澄清反问（Anna / 拍板A·最多1次澄清）
+  ══════════════════════════════════════════════════════════
+-->
+<style>
+  :root{
+    --bg-page:#0A0F0E; --bg-app:#101917; --bg-card:#1C2624; --bg-elev:#232F2C;
+    --teal:#17A398; --teal-deep:#0F8C7F; --text:#E8EFED; --text-dim:#8FA29D;
+    --line:rgba(255,255,255,.07); --danger:#E5484D; --ok:#3DD68C;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(23,163,152,.08), transparent 60%),
+      radial-gradient(900px 500px at 5% 100%, rgba(23,163,152,.05), transparent 55%),
+      var(--bg-page);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    min-height:100vh; padding:56px 48px 80px;
+  }
+  /* ── 页头 ── */
+  .page-head{max-width:2300px;margin:0 auto 52px;}
+  .brand-row{display:flex;align-items:center;gap:18px;margin-bottom:18px;}
+  .brand-row img{height:44px;opacity:.95;}
+  .brand-row .divider{width:1px;height:30px;background:var(--line);}
+  .brand-row .proj{font-size:13px;letter-spacing:.22em;color:var(--text-dim);text-transform:uppercase;}
+  h1{font-size:30px;font-weight:700;letter-spacing:.01em;}
+  h1 .cee{color:var(--teal);}
+  .sub{margin-top:10px;font-size:14px;color:var(--text-dim);line-height:1.8;max-width:860px;}
+  .sub b{color:var(--text);font-weight:600;}
+  /* ── 平铺区 ── */
+  .gallery{max-width:2300px;margin:0 auto;display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start;}
+  .unit .label{font-size:13px;font-style:italic;color:var(--text-dim);margin:0 0 10px 6px;line-height:1.6;}
+  .unit .label b{color:var(--teal);font-style:normal;}
+  /* ── iPhone 壳（规格移植自 ios_frame.jsx · iPhone 15 Pro）── */
+  .phone{display:inline-block;padding:12px;background:#000;border-radius:60px;
+    box-shadow:0 0 0 2px #1f2937,0 20px 60px rgba(0,0,0,.4);position:relative;}
+  .screen{position:relative;width:393px;height:852px;border-radius:48px;overflow:hidden;background:var(--bg-app);}
+  .island{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:124px;height:36px;background:#000;border-radius:999px;z-index:30;}
+  .statusbar{position:absolute;top:0;left:0;right:0;height:54px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 32px;font-size:15px;font-weight:600;z-index:20;pointer-events:none;color:#fff;}
+  .sicons{display:flex;align-items:center;gap:6px;}
+  .sig{display:flex;align-items:flex-end;gap:2px;height:12px;}
+  .sig i{width:3px;background:#fff;border-radius:1px;display:block;}
+  .batt{width:26px;height:12px;border:1.5px solid #fff;border-radius:3px;padding:1px;position:relative;opacity:.85;}
+  .batt i{display:block;width:78%;height:100%;background:#fff;border-radius:1px;}
+  .batt::after{content:"";position:absolute;top:3px;right:-4px;width:2px;height:6px;background:#fff;border-radius:0 1px 1px 0;}
+  .home{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:140px;height:5px;background:rgba(255,255,255,.5);border-radius:999px;z-index:25;}
+  .content{position:absolute;top:54px;left:0;right:0;bottom:34px;display:flex;flex-direction:column;overflow:hidden;}
+  /* ── App 内部 ── */
+  .navbar{display:flex;align-items:center;gap:12px;padding:10px 16px 12px;border-bottom:1px solid var(--line);}
+  .navbar .back{font-size:20px;color:var(--text);width:24px;}
+  .navbar .title{font-size:16px;font-weight:600;flex:1;text-align:center;margin-right:36px;}
+  .agent-head{display:flex;align-items:center;gap:10px;padding:12px 16px 4px;}
+  .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal-deep));
+    display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;position:relative;flex:none;}
+  .avatar .dot{position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;border-radius:50%;background:var(--ok);border:2px solid var(--bg-app);}
+  .agent-head .name{font-size:13px;font-weight:600;}
+  .agent-head .tag{font-size:10px;color:var(--teal);border:1px solid rgba(23,163,152,.4);border-radius:4px;padding:1px 5px;margin-left:6px;}
+  .agent-head .langs{font-size:10px;color:var(--text-dim);margin-left:auto;}
+  .chat{flex:1;overflow-y:auto;padding:10px 14px 12px;display:flex;flex-direction:column;gap:10px;}
+  .chat::-webkit-scrollbar{width:0;}
+  .msg{max-width:78%;padding:10px 13px;border-radius:16px;font-size:13.5px;line-height:1.65;word-break:break-word;}
+  .msg.ai{background:var(--bg-card);border:1px solid var(--line);border-top-left-radius:6px;align-self:flex-start;}
+  .msg.user{background:linear-gradient(135deg,var(--teal),var(--teal-deep));color:#fff;border-top-right-radius:6px;align-self:flex-end;}
+  .msg .en{font-size:13px;}
+  .sys-tip{align-self:center;font-size:10.5px;color:var(--text-dim);background:rgba(255,255,255,.04);border-radius:10px;padding:4px 12px;}
+  /* 快捷 chips */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;align-self:flex-start;max-width:88%;}
+  .chip{font-size:12px;color:var(--teal);background:rgba(23,163,152,.09);border:1px solid rgba(23,163,152,.35);
+    border-radius:999px;padding:6px 12px;cursor:pointer;transition:.15s;}
+  .chip:hover{background:rgba(23,163,152,.2);}
+  .chip:active{transform:scale(.96);}
+  .chip.danger{color:#F08589;border-color:rgba(229,72,77,.4);background:rgba(229,72,77,.08);}
+  /* 来源卡 */
+  .source{display:flex;align-items:center;gap:8px;background:rgba(23,163,152,.07);border:1px solid rgba(23,163,152,.25);
+    border-radius:10px;padding:7px 11px;font-size:11px;color:var(--teal);align-self:flex-start;max-width:78%;cursor:pointer;}
+  .source:hover{background:rgba(23,163,152,.14);}
+  /* 反馈行 */
+  .fb{display:flex;gap:8px;align-self:flex-start;margin-top:-2px;}
+  .fb button{background:var(--bg-card);border:1px solid var(--line);color:var(--text-dim);font-size:12px;
+    border-radius:999px;padding:4px 12px;cursor:pointer;transition:.15s;}
+  .fb button:hover{border-color:var(--teal);color:var(--teal);}
+  .fb button.on{background:rgba(23,163,152,.15);border-color:var(--teal);color:var(--teal);}
+  .fb button.on-down{background:rgba(229,72,77,.12);border-color:var(--danger);color:#F08589;}
+  /* 工具卡 */
+  .tool-card{background:var(--bg-card);border:1px solid var(--line);border-radius:16px;border-top-left-radius:6px;
+    padding:13px 14px;align-self:flex-start;max-width:86%;font-size:12.5px;}
+  .tool-card .tc-head{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;margin-bottom:3px;}
+  .tool-card .tc-head .ic{width:22px;height:22px;border-radius:7px;background:rgba(23,163,152,.15);display:flex;align-items:center;justify-content:center;font-size:12px;}
+  .tool-card .tc-sub{color:var(--text-dim);font-size:11px;margin-bottom:11px;}
+  .tl{list-style:none;position:relative;margin:2px 0 10px 4px;}
+  .tl li{position:relative;padding:0 0 16px 22px;font-size:12.5px;}
+  .tl li:last-child{padding-bottom:2px;}
+  .tl li::before{content:"";position:absolute;left:5px;top:15px;bottom:-2px;width:2px;background:var(--line);}
+  .tl li:last-child::before{display:none;}
+  .tl .nd{position:absolute;left:0;top:2px;width:12px;height:12px;border-radius:50%;}
+  .tl .done .nd{background:var(--teal);box-shadow:0 0 0 3px rgba(23,163,152,.18);}
+  .tl .done .nd::after{content:"✓";position:absolute;inset:0;font-size:8px;color:#fff;display:flex;align-items:center;justify-content:center;}
+  .tl .doing .nd{background:var(--bg-app);border:3px solid var(--teal);animation:pulse 1.6s infinite;}
+  .tl .todo .nd{background:var(--bg-app);border:2px solid var(--text-dim);opacity:.6;}
+  .tl .t{color:var(--text);} .tl .doing .t{color:var(--teal);font-weight:600;}
+  .tl .todo .t{color:var(--text-dim);}
+  .tl .time{display:block;font-size:10.5px;color:var(--text-dim);margin-top:1px;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(23,163,152,.35);}50%{box-shadow:0 0 0 6px rgba(23,163,152,0);}}
+  .legal{font-size:10.5px;color:var(--text-dim);border-top:1px dashed var(--line);padding-top:8px;line-height:1.6;}
+  /* 收集清单卡 / 工单卡 */
+  .collect{list-style:none;margin:4px 0 2px;}
+  .collect li{display:flex;align-items:center;gap:9px;padding:7px 0;font-size:12.5px;border-bottom:1px dashed var(--line);}
+  .collect li:last-child{border-bottom:none;}
+  .collect .st{width:18px;height:18px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10px;}
+  .collect .got .st{background:rgba(23,163,152,.18);color:var(--teal);}
+  .collect .need .st{border:1.5px dashed var(--text-dim);color:var(--text-dim);}
+  .collect .need{cursor:pointer;} .collect .need:hover .lab{color:var(--teal);}
+  .collect .lab{color:var(--text);} .collect .val{margin-left:auto;color:var(--text-dim);font-size:11px;}
+  .ticket{background:linear-gradient(135deg,rgba(23,163,152,.13),rgba(15,140,127,.07));border:1px solid rgba(23,163,152,.35);
+    border-radius:16px;border-top-left-radius:6px;padding:13px 14px;align-self:flex-start;max-width:86%;font-size:12px;}
+  .ticket .tk-head{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;color:var(--teal);margin-bottom:9px;}
+  .ticket .row{display:flex;justify-content:space-between;padding:3.5px 0;color:var(--text-dim);}
+  .ticket .row b{color:var(--text);font-weight:500;}
+  .ticket.pending{opacity:.55;filter:grayscale(.4);}
+  .ticket .wait-tip{color:var(--text-dim);font-size:11px;text-align:center;padding:2px 0 1px;}
+  /* 澄清选项按钮 */
+  .opt{display:flex;flex-direction:column;gap:8px;align-self:flex-start;max-width:78%;width:260px;}
+  .opt button{text-align:left;background:var(--bg-card);border:1px solid rgba(23,163,152,.35);color:var(--text);
+    font-size:12.5px;border-radius:12px;padding:10px 13px;cursor:pointer;transition:.15s;line-height:1.5;}
+  .opt button:hover{background:rgba(23,163,152,.12);border-color:var(--teal);}
+  .opt button b{color:var(--teal);}
+  .opt button.picked{background:rgba(23,163,152,.18);border-color:var(--teal);}
+  /* typing */
+  .typing{display:flex;gap:4px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--line);
+    border-radius:16px;border-top-left-radius:6px;align-self:flex-start;}
+  .typing i{width:6px;height:6px;border-radius:50%;background:var(--text-dim);animation:blink 1.2s infinite;}
+  .typing i:nth-child(2){animation-delay:.2s;} .typing i:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,60%,100%{opacity:.25;transform:translateY(0);}30%{opacity:1;transform:translateY(-3px);}}
+  /* 输入区 */
+  .inputbar{display:flex;align-items:center;gap:9px;padding:10px 14px 12px;border-top:1px solid var(--line);background:var(--bg-app);}
+  .inputbar .field{flex:1;background:var(--bg-elev);border:1px solid var(--line);border-radius:999px;
+    padding:9px 15px;font-size:13px;color:var(--text-dim);}
+  .inputbar .send{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal-deep));
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;flex:none;cursor:pointer;}
+  .inputbar .human{flex:none;font-size:11px;color:var(--text-dim);border:1px solid var(--line);border-radius:999px;
+    padding:8px 11px;cursor:pointer;transition:.15s;}
+  .inputbar .human:hover{color:var(--teal);border-color:var(--teal);}
+  .fallback-entry{text-align:center;font-size:11px;color:var(--text-dim);padding:2px 0 6px;}
+  .fallback-entry a{color:var(--text-dim);text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+  .fallback-entry a:hover{color:var(--teal);}
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:44px;transform:translateX(-50%) translateY(20px);background:#1C2624;
+    border:1px solid rgba(23,163,152,.5);color:var(--text);font-size:13px;border-radius:12px;padding:10px 20px;
+    opacity:0;pointer-events:none;transition:.25s;z-index:99;box-shadow:0 8px 30px rgba(0,0,0,.5);}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  /* 页脚注释 */
+  .notes{max-width:2300px;margin:64px auto 0;border-top:1px solid var(--line);padding-top:34px;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:28px;}
+  .notes h3{font-size:13px;letter-spacing:.16em;color:var(--teal);margin-bottom:14px;font-weight:600;}
+  .notes ul{list-style:none;} .notes li{font-size:12.5px;color:var(--text-dim);line-height:1.9;padding-left:16px;position:relative;}
+  .notes li::before{content:"—";position:absolute;left:0;color:var(--teal);opacity:.6;}
+  .notes li b{color:var(--text);font-weight:500;}
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <div class="brand-row">
+    <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iX+S4reiLseaWh+eZvTIwNDhweCIgZGF0YS1uYW1lPSLkuK3oi7Hmlofnmb0yMDQ4cHgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjIwNDgiIGhlaWdodD0iMTE1MCIgdmlld0JveD0iMCAwIDIwNDggMTE1MCI+CiAgPHBhdGggZD0iTTc5Ny4zOCw0NjEuNjNjMCw4LjM4LS43LDE2LjktMi4wOCwyNS4zM2wtLjIzLDEuNDRoLTE1NC4yNmMtMTguNTUsMC0zMy42NC0xNS4wOS0zMy42NC0zMy42NHMxNS4wOS0zMy42NCwzMy42NC0zMy42NGg3NC4wNWMtMTUuMTMtMjcuNjYtNDMuOS00NS4zOS03NC4wNS00NS4zOS00Ni42LDAtODQuNSwzOC41My04NC41LDg1Ljg5czM3LjkxLDg1LjksODQuNSw4NS45YzIyLjEyLDAsNDQuNDItMTAuMSw2MS4xNy0yNy43MWwuNTEtLjUzaDgzLjkxbC0uOTksMi4zOGMtMjQuNDQsNTguNjUtODEuMiw5Ni41NS0xNDQuNTksOTYuNTUtODYuMzMsMC0xNTYuNTctNzAuMjQtMTU2LjU3LTE1Ni41N3M3MC4yNC0xNTYuNTcsMTU2LjU3LTE1Ni41NywxNTYuNTcsNzAuMjQsMTU2LjU3LDE1Ni41N1pNMTI2Ni45Miw1MTkuNGgtLjc0bC0uNTEuNTNjLTE2Ljc1LDE3LjYxLTM5LjA0LDI3LjcxLTYxLjE2LDI3LjcxLTQ2LjYsMC04NC41LTM4LjUzLTg0LjUtODUuOXMzNy45MS04NS44OSw4NC41LTg1Ljg5YzIyLjA3LDAsNDQuMzMsMTAuMSw2MS4wNywyNy43MWwuNTEuNTNoODRsLS45OS0yLjM4Yy0yNC40NC01OC42NS04MS4xOS05Ni41NS0xNDQuNTktOTYuNTUtODYuMzMsMC0xNTYuNTcsNzAuMjQtMTU2LjU3LDE1Ni41N3M3MC4yNCwxNTYuNTcsMTU2LjU3LDE1Ni41N2M2My40LDAsMTIwLjE1LTM3LjksMTQ0LjU5LTk2LjU1bC45OS0yLjM4aC04My4xN1pNMTUyNi41NywzMDUuMTdjLTg2LjMzLDAtMTU2LjU3LDcwLjI0LTE1Ni41NywxNTYuNTdzNzAuMjQsMTU2LjU3LDE1Ni41NywxNTYuNTdjNjMuNCwwLDEyMC4xNS0zNy45LDE0NC41OS05Ni41NWwuOTktMi4zOGgtODMuOTFsLS41MS41M2MtMTYuNzUsMTcuNjEtMzkuMDQsMjcuNzEtNjEuMTYsMjcuNzEtNDYuNiwwLTg0LjUtMzguNTMtODQuNS04NS45czM3LjkxLTg1Ljg5LDg0LjUtODUuODljMzAuMTUsMCw1OC45MiwxNy43Myw3NC4wNSw0NS4zOWgtNzQuMDVjLTE4LjU1LDAtMzMuNjQsMTUuMDktMzMuNjQsMzMuNjRzMTUuMDksMzMuNjQsMzMuNjQsMzMuNjRoMTU0LjI2bC4yMy0xLjQ0YzEuMzgtOC40NCwyLjA4LTE2Ljk2LDIuMDgtMjUuMzMsMC04Ni4zMy03MC4yNC0xNTYuNTctMTU2LjU3LTE1Ni41N1pNMTg3MC42LDMwNS4xN2MtODYuMzMsMC0xNTYuNTcsNzAuMjQtMTU2LjU3LDE1Ni41N3M3MC4yNCwxNTYuNTcsMTU2LjU3LDE1Ni41N2M2My40LDAsMTIwLjE1LTM3LjksMTQ0LjU5LTk2LjU1bC45OS0yLjM4aC04My45MWwtLjUxLjUzYy0xNi43NSwxNy42MS0zOS4wNCwyNy43MS02MS4xNiwyNy43MS00Ni42LDAtODQuNS0zOC41My04NC41LTg1LjlzMzcuOTEtODUuODksODQuNS04NS44OWMzMC4xNSwwLDU4LjkyLDE3LjczLDc0LjA1LDQ1LjM5aC03NC4wNWMtMTguNTUsMC0zMy42NCwxNS4wOS0zMy42NCwzMy42NHMxNS4wOSwzMy42NCwzMy42NCwzMy42NGgxNTQuMjZsLjIzLTEuNDRjMS4zOC04LjQ0LDIuMDgtMTYuOTYsMi4wOC0yNS4zMywwLTg2LjMzLTcwLjI0LTE1Ni41Ny0xNTYuNTctMTU2LjU3Wk0xMDE1LjMzLDE5Ni4yOWgtNzAuMzV2NDE1LjI5aDcyLjA3VjE5Ni4yOWgtMS43MlpNODk4LjYyLDE5Ni4yOWgtNzAuMzV2NDE1LjI5aDcyLjA3VjE5Ni4yOWgtMS43MlpNNTEyLjMxLDE5Ni4yOWgtNzMuNzZsLS4yOSwxLjM1LTY2LjM3LDMwNS40Ni02Ni4zNy0zMDUuNDYtLjI5LTEuMzVoLTc1LjE0bC0uMjksMS4zNS02Ni4zNywzMDUuNDZMOTcuMDgsMTk3LjY0bC0uMjktMS4zNUgyMC44M2wuNTQsMi4xNCwxMDQuMjMsNDExLjk3LjMzLDEuM2g3NS4wNWwuMzItMS4zLDY2LjM4LTI2OC40LDY2LjM4LDI2OC40LjMyLDEuM2g3NS4wNWwuMzMtMS4zLDEwNC4yMy00MTEuOTcuNTQtMi4xNGgtMi4yMVpNMTkwOS4wNCwxMzkuNjN2LTc1LjMyaC03Mi4wN3YyNS45M2MtMTYxLjU4LTEwNS40Ni0xODQuNS02NC4yMy00NTYuMzksMTI0Ljk4bDQwLjYxLDU5LjU0YzI5My4xLTIwNi42NSwyNjEuMTEtMjA3LjI3LDU1NC43OSwwbDQwLjYxLTU5LjU0Yy00MS4xMy0yOC41OC03Ni41LTUzLjc1LTEwNy41Ni03NS42Wk0zNTYuMDMsMTA1NC4wOHYtNTIuNTNoNjEuMjh2LTMxLjg0aC02MS4yOHYtNDUuMzdoNjEuMjh2LTMzLjA0aC02MS4yOHYtNDYuNTdoNjkuMjV2LTMyLjYzaC02Mi40OWMtNy45Ni0yOC4yNi0xNC45OS01Mi45My0xOC4xNi02Mi4wOWwtMzMuODMsNS45N2MzLjU4LDkuOTUsMTAuMjEsMzIuMjMsMTYuMTgsNTYuMTFoLTU3LjMxYzYuMzctMTkuNTEsMTEuOTMtMzguMjEsMTYuMzItNTYuMTFsLTM1LjAzLTUuOTdjLTExLjE1LDQ3Ljc2LTI5Ljg1LDk3LjUxLTUyLjUzLDEzNi4xMnYtOTIuNzNoLTEwMS40OHYyNjAuNjhoMTAxLjQ4di0xMzIuNTNsMTMuNTMsMTAuMzRjNy4xNi0xMC43NCwxMy4xNC0yMC42OSwxNy41MS0yOS4wNXYyMDguNTVoMzQuMjJ2LTI1Ljg3aDE2Ny41NXYtMzEuNDRoLTc1LjIyWk0xMjkuMTgsODI2LjgzaDM2LjYydjE5My4wMmgtMzYuNjJ2LTE5My4wMlpNMjYzLjcsODQ0Ljc0aDU4LjF2NDYuNTdoLTU4LjF2LTQ2LjU3Wk0yNjMuNyw5MjQuMzRoNTguMXY0NS4zN2gtNTguMXYtNDUuMzdaTTMyMS44LDEwNTQuMDhoLTU4LjF2LTUyLjUzaDU4LjF2NTIuNTNaTTEyOTAuNSw4NTEuOTFoLTgzLjU4di0zNC4yM2MzOC42MS00LjM4LDcyLjA0LTExLjE1LDEwMS4wOS0yMC4zbC04LjM2LTM1LjgxYy0zNi4yMSwxMC43NC03OC40LDE4LjMtMTI2Ljk1LDIzLjA4djEyNy4zNWMwLDM0LjYzLTEuMiw2MS42OS0zLjU4LDgxLjU5LTEuOTksMTkuOS01Ljk3LDM3LjQtMTEuMTUsNTIuMTMtNS4xNywxNC43My0xMy41MywzMS44NC0yNC42OCw1MS43NGwzMy44MywxNy45MmMxMS41NC0yMi42OCwyMC4zLTQyLjE5LDI1Ljg3LTU4LjkxLDUuNTYtMTcuMTEsOS41NS0zOC4yMSwxMS41NC02NC4wN2g4NS45NnYtMTQwLjQ4Wk0xMjU1Ljg4LDk1Ny43N2gtNDkuNzVjLjQtMTcuOTEuNzktMzMuMDQuNzktNDQuOTh2LTI2LjY2aDQ4Ljk1djcxLjYzWk0xMzU2LjE3LDg4Ni4xM3YtNjMuNjhjNDAuOTktNC43OCw4Ny4xNi0xNC43MywxMjAuOTktMjUuODdsLTEwLjM0LTM2LjIxYy0xOS41MSw2Ljc2LTQyLjE5LDEyLjc0LTY4LjA2LDE3LjkxLTI1Ljg2LDUuMTctNTEuNzQsOC43Ni03Ny42LDExLjE1djExNi42MWMwLDMzLjgzLTEuNiw2MC40OS00Ljc4LDgwLjM5LTMuMTksMTkuNTEtOS4xNSwzNy4wMi0xNy41MSw1Mi41NC04LjM2LDE1LjUyLTIxLjA5LDMyLjYzLTM4LjIxLDUyLjEzbDI5LjQ1LDI1LjQ3YzUyLjkzLTY1LjY3LDYzLjI4LTk4LjI5LDY2LjA2LTE5NS4wMWg1MC45NHYxODcuMDVoMzUuODJ2LTE4Ny4wNWg1My43M3YtMzUuNDJoLTE0MC40OVpNMTg2Ny44MSw3ODcuMDNsLTEzLjE0LTM3LjAyLTM1LjgxLDUuNTcsOS45NSwzMS40NWgtMTQ0LjA3djc2LjQxaDMyLjI0di00Ny4zNmgyNTUuOXY0Ny4zNmgzMy4wNHYtNzYuNDFoLTEzOC4xWk0xOTYxLjM0LDk1Ni45N3YtMTE4LjJoLTIzMi4wMnYxMTguMmg5OS44OXYyMC4yOWgtMTMyLjUzdjEzMS4zNGgzNC4yMnYtMTAzLjg4aDk4LjN2MzUuNDJsLTc4LjQsMy41OCwxLjIsMjkuMDVjMjMuODgtLjc5LDUxLjM0LTEuOTgsODIuMzktMy41OCwzMS40NC0xLjk4LDU4LjEtMy41OCw4MC4zOS01LjU3bDcuOTYsMTQuNzMsMjIuNjgtMTUuMTJjLTQuMzgtNy45Ni05Ljk1LTE3LjUxLTE3LjExLTI4LjY2LTYuNzYtMTEuNTQtMTMuMTMtMjAuNjktMTguMzEtMjcuODZsLTIzLjA4LDEyLjc0LDExLjE1LDE2LjMyLTM1LjgyLDIuMzh2LTMzLjQzaDk1LjExdjUzLjM0YzAsMTUuOTEtMy4xOCwyMS4wOS0yMC4yOSwyMi4yOGw5LjU1LDI5LjA1YzM3LjQxLTMuMTgsNDUuNzctMTIuMzMsNDUuNzctNDQuMTd2LTg3Ljk2aC0xMzAuMTR2LTIwLjI5aDk5LjFaTTE3NjEuOTQsODg2LjEzdi0yMi42OGg2Ny4yNnYyMi42OGgtNjcuMjZaTTE4MjkuMiw5MTAuNDF2MjIuMjhoLTY3LjI2di0yMi4yOGg2Ny4yNlpNMTg2Mi4yNCw4NjMuNDVoNjYuODZ2MjIuNjhoLTY2Ljg2di0yMi42OFpNMTkyOS4wOSw5MTAuNDF2MjIuMjhoLTY2Ljg2di0yMi4yOGg2Ni44NlpNNzA1LjgxLDEwNDUuNzJjMCw0MC42LDEzLjUzLDUzLjM0LDUyLjkzLDU1LjcyLDExLjE0Ljc5LDIzLjQ4LDEuMiwzNi42MSwxLjJzMjUuMDgtLjQsMzQuNjMtMS4yYzM4LjYxLTIuMzgsNDkuNzUtMTEuOTQsNTYuOTItNDguMTYsMi43OS0xNC4zMyw0Ljc4LTM0LjIsNS45Ny00OS43MmwtMzcuNDEtNy45OWMtMS4xOSwxNi4zMi0yLjc5LDMwLjY1LTQuNzcsNDIuOTgtMy4xOSwxOC4zMS01LjU3LDIzLjQ4LTI5LjA1LDI1Ljg3LTguMzYuNzktMTcuNTEsMS4xOS0yOC4yNiwxLjE5LTkuMTUsMC0xNy4xMi0uMzktMjQuMjgtMS4xOS0xOS41LTEuOTktMjQuMjctNy4xNi0yNC4yNy0yNS4wOHYtMjAwLjU4bC0zOS0xLjk5djIwOC45NFpNNzM0LjQ2LDc3Ny4xOWMzNS4yLDM2LjYxLDY2Ljk1LDc0LjgsOTQuODEsMTEzLjgxbDI4LjExLTI4LjY3Yy0zMy44Mi00Mi4zNy02Ni4yLTc4Ljg5LTk3LjEtMTA5LjE2bC0yNS44MiwyNC4wMlpNODcyLjE3LDg3NS43OGMyMC42OSwzOS44LDQ0LjU3LDk1LjkyLDYzLjY4LDE1MC4wNGwzNC4yMi0xOC4zMWMtOS41NS0yNS4wNy0yMC4yOS01MC45NC0zMS44NC03Ni44MS0xMS41NC0yNi4yNy0yMi42OC00OS43NS0zMy40My03MC4wNWwtMzIuNjMsMTUuMTJaTTY4Mi4xMiw4NzUuMzhjLTUuOTcsNDguOTUtMTcuNTEsMTE3LjQxLTMyLjYzLDE2MS4xOGwtMzcuODEtMTUuNTJjMTUuOTItNDEuMzksMjguMjYtMTAyLjY4LDMzLjgzLTE1Mi44M2wzNi42Miw3LjE2WiIgZmlsbD0iI2ZmZiIvPgo8L3N2Zz4=" alt="Wellcee">
+    <div class="divider"></div>
+    <div class="proj">AI Customer Service Agent · Hi-Fi Prototype</div>
+  </div>
+  <h1>智能客服「小<span class="cee">Cee</span>」· 五个关键对话状态</h1>
+  <p class="sub">设计依据 <b>PRD v1.0</b>（工单系统前的 AI 对话拦截层）。五台设备分别对应五种核心处置形态，<b>每台均可交互</b>：点击快捷问题、满意度按钮、澄清选项、材料上传试试。深色界面与品牌色取自 App 真机截图（brand-spec.md）。</p>
+</header>
+
+<main class="gallery">
+
+  <!-- ═══ ① 开场 ═══ -->
+  <div class="unit">
+    <p class="label"><b>01 · 开场与快捷问题</b><br>入口并存（拍板B）· 明示AI身份 · 双语提示 —— 试试点快捷问题</p>
+    <div class="phone"><div class="screen">
+      <div class="island"></div>
+      <div class="statusbar"><span>9:41</span><div class="sicons"><div class="sig"><i style="height:4px"></i><i style="height:6px"></i><i style="height:9px"></i><i style="height:11px"></i></div><div class="batt"><i></i></div></div></div>
+      <div class="content">
+        <div class="navbar"><div class="back">‹</div><div class="title">帮助与客服</div></div>
+        <div class="agent-head">
+          <div class="avatar">C<span class="dot"></span></div>
+          <span class="name">小Cee</span><span class="tag">AI 助手</span>
+          <span class="langs">中文 · English</span>
+        </div>
+        <div class="chat" id="chat1">
+          <div class="sys-tip">AI 生成内容仅供参考 · 随时可转人工</div>
+          <div class="msg ai">Hi，我是小Cee 🌿 Wellcee 的 AI 客服助手。租房、签约、押金的问题都可以直接问我；涉及纠纷或需要人工时，我会先帮你把信息整理好再转给同事，省去重复描述。<br><span style="color:var(--text-dim);font-size:12px">Also happy to help in English anytime.</span></div>
+          <div class="chips" id="chips1">
+            <span class="chip">押金怎么退？</span>
+            <span class="chip">怎么联系房东？</span>
+            <span class="chip">收不到验证码</span>
+            <span class="chip">How to sign online?</span>
+            <span class="chip danger">举报虚假房源</span>
+          </div>
+        </div>
+        <div class="fallback-entry">或使用 <a>传统表单咨询 →</a></div>
+        <div class="inputbar"><div class="field">输入你的问题…</div><div class="send">➤</div><div class="human">人工</div></div>
+      </div>
+      <div class="home"></div>
+    </div></div>
+  </div>
+
+  <!-- ═══ ② FAQ直答 ═══ -->
+  <div class="unit">
+    <p class="label"><b>02 · FAQ 直答 + 来源标注</b><br>意图 A5 押金托管 · 回答引知识库原文 —— 试试点 👍</p>
+    <div class="phone"><div class="screen">
+      <div class="island"></div>
+      <div class="statusbar"><span>9:41</span><div class="sicons"><div class="sig"><i style="height:4px"></i><i style="height:6px"></i><i style="height:9px"></i><i style="height:11px"></i></div><div class="batt"><i></i></div></div></div>
+      <div class="content">
+        <div class="navbar"><div class="back">‹</div><div class="title">帮助与客服</div></div>
+        <div class="agent-head"><div class="avatar">C<span class="dot"></span></div><span class="name">小Cee</span><span class="tag">AI 助手</span></div>
+        <div class="chat">
+          <div class="msg user">押金是交给平台还是房东？</div>
+          <div class="msg ai">走<b>线上签约</b>的话，押金由 Wellcee 平台<b>全程托管</b>，一直到租期结束——不经过房东之手；租金则是在你入住后直接支付给房东。<br><br>如果没有走线上签约，Wellcee 不建议你在<b>实地看房、签正式合同之前</b>向房东直接转账任何押金。</div>
+          <div class="source">📄 来源：Wellcee FAQ · 线上签约 &nbsp;›</div>
+          <div class="fb"><button class="up" onclick="fbUp(this)">👍 有帮助</button><button class="down" onclick="fbDown(this)">👎</button></div>
+          <div class="chips"><span class="chip">那押金怎么退？</span><span class="chip">线上签约怎么操作</span></div>
+        </div>
+        <div class="inputbar"><div class="field">输入你的问题…</div><div class="send">➤</div><div class="human">人工</div></div>
+      </div>
+      <div class="home"></div>
+    </div></div>
+  </div>
+
+  <!-- ═══ ③ 工具调用 ═══ -->
+  <div class="unit">
+    <p class="label"><b>03 · 工具调用 · 押金进度查询</b><br>意图 A6（MVP 唯一工具）· 时间线卡片 · 法务限定语</p>
+    <div class="phone"><div class="screen">
+      <div class="island"></div>
+      <div class="statusbar"><span>9:41</span><div class="sicons"><div class="sig"><i style="height:4px"></i><i style="height:6px"></i><i style="height:9px"></i><i style="height:11px"></i></div><div class="batt"><i></i></div></div></div>
+      <div class="content">
+        <div class="navbar"><div class="back">‹</div><div class="title">帮助与客服</div></div>
+        <div class="agent-head"><div class="avatar">C<span class="dot"></span></div><span class="name">小Cee</span><span class="tag">AI 助手</span></div>
+        <div class="chat">
+          <div class="msg user">我的押金什么时候到账？</div>
+          <div class="msg ai">帮你查一下～请提供<b>签约订单号</b>（在「我的 → 我的签约」里可以找到，WC 开头）。</div>
+          <div class="msg user">WC20260629-1883</div>
+          <div class="tool-card">
+            <div class="tc-head"><span class="ic">🔍</span>押金退还进度</div>
+            <div class="tc-sub">订单 WC20260629-1883 · 静安 · 宝华现代城1期</div>
+            <ul class="tl">
+              <li class="done"><span class="nd"></span><span class="t">房东已确认退还</span><span class="time">07-06 14:22</span></li>
+              <li class="doing"><span class="nd"></span><span class="t">平台处理中</span><span class="time">正在原路退回你的支付账户</span></li>
+              <li class="todo"><span class="nd"></span><span class="t">预计到账</span><span class="time">1-3 个工作日</span></li>
+            </ul>
+            <div class="legal">⏱ 到账时间以实际为准；若超过 3 个工作日未到账，请回复「转人工」，我会带着这条查询记录为你转接核查。</div>
+          </div>
+          <div class="fb"><button class="up" onclick="fbUp(this)">👍 有帮助</button><button class="down" onclick="fbDown(this)">👎</button></div>
+        </div>
+        <div class="inputbar"><div class="field">输入你的问题…</div><div class="send">➤</div><div class="human">人工</div></div>
+      </div>
+      <div class="home"></div>
+    </div></div>
+  </div>
+
+  <!-- ═══ ④ 举报转人工 ═══ -->
+  <div class="unit">
+    <p class="label"><b>04 · 高风险必转人工 · 举报收集</b><br>意图 A9 · AI 不下结论只收集 —— 试试点「证据截图」上传</p>
+    <div class="phone"><div class="screen">
+      <div class="island"></div>
+      <div class="statusbar"><span>9:41</span><div class="sicons"><div class="sig"><i style="height:4px"></i><i style="height:6px"></i><i style="height:9px"></i><i style="height:11px"></i></div><div class="batt"><i></i></div></div></div>
+      <div class="content">
+        <div class="navbar"><div class="back">‹</div><div class="title">帮助与客服</div></div>
+        <div class="agent-head"><div class="avatar">C<span class="dot"></span></div><span class="name">小Cee</span><span class="tag">AI 助手</span></div>
+        <div class="chat">
+          <div class="msg user">这个房东其实是中介冒充的！约看房才发现，气死我了</div>
+          <div class="msg ai">非常抱歉让你遇到这样的经历 🙏 中介冒充个人房东是平台明令禁止的行为。这类问题会由<b>人工审核同事</b>处理——我先帮你把材料整理齐，转过去就能直接优先受理，不用你再重复描述。</div>
+          <div class="tool-card">
+            <div class="tc-head"><span class="ic">📋</span>举报材料清单 <span id="clct-count" style="margin-left:auto;font-size:11px;color:var(--text-dim)">3/4</span></div>
+            <ul class="collect">
+              <li class="got"><span class="st">✓</span><span class="lab">对方昵称</span><span class="val">「御景****房东」</span></li>
+              <li class="got"><span class="st">✓</span><span class="lab">房源链接</span><span class="val">已自动获取</span></li>
+              <li class="got"><span class="st">✓</span><span class="lab">事件描述</span><span class="val">已从对话提取</span></li>
+              <li class="need" id="up-shot" onclick="uploadShot()"><span class="st">＋</span><span class="lab">证据截图</span><span class="val">点击上传（选填）</span></li>
+            </ul>
+          </div>
+          <div class="ticket pending" id="tk4">
+            <div class="tk-head">🎫 审核工单</div>
+            <div class="wait-tip" id="tk4-tip">补充截图或直接回复「提交」即可生成工单</div>
+            <div id="tk4-body" style="display:none">
+              <div class="row"><span>工单号</span><b>WO-20260708-1132</b></div>
+              <div class="row"><span>分类</span><b>举报 · 中介冒充房东</b></div>
+              <div class="row"><span>响应时限</span><b>≤ 24 小时</b></div>
+              <div class="row"><span>进度查看</span><b>我的 → 咨询记录</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="inputbar"><div class="field">输入你的问题…</div><div class="send">➤</div><div class="human">人工</div></div>
+      </div>
+      <div class="home"></div>
+    </div></div>
+  </div>
+
+  <!-- ═══ ⑤ English + 澄清 ═══ -->
+  <div class="unit">
+    <p class="label"><b>05 · English + 低置信度澄清</b><br>Persona Anna · 澄清最多 1 次（拍板A）—— 试试点选项</p>
+    <div class="phone"><div class="screen">
+      <div class="island"></div>
+      <div class="statusbar"><span>9:41</span><div class="sicons"><div class="sig"><i style="height:4px"></i><i style="height:6px"></i><i style="height:9px"></i><i style="height:11px"></i></div><div class="batt"><i></i></div></div></div>
+      <div class="content">
+        <div class="navbar"><div class="back">‹</div><div class="title">Help &amp; Support</div></div>
+        <div class="agent-head"><div class="avatar">C<span class="dot"></span></div><span class="name">Cee</span><span class="tag">AI Assistant</span></div>
+        <div class="chat" id="chat5">
+          <div class="msg user en">hey, about the deposit...</div>
+          <div class="msg ai en">Sure! Just to make sure I get you the right answer — are you asking about:</div>
+          <div class="opt" id="opt5">
+            <button onclick="pickOpt(this,1)"><b>💰 Deposit rules</b><br>Who holds my deposit &amp; is it safe?</button>
+            <button onclick="pickOpt(this,2)"><b>⏱ Refund progress</b><br>When will I get my deposit back?</button>
+          </div>
+        </div>
+        <div class="inputbar"><div class="field">Type your question…</div><div class="send">➤</div><div class="human">Agent</div></div>
+      </div>
+      <div class="home"></div>
+    </div></div>
+  </div>
+
+</main>
+
+<!-- ── 设计注释 ── -->
+<footer class="notes">
+  <div>
+    <h3>UX 决策 ↔ PRD 对照</h3>
+    <ul>
+      <li><b>开场明示 AI 身份</b> + 顶部"仅供参考"提示 —— PRD 5.5 红线（合规要求，也管理预期）</li>
+      <li><b>「人工」按钮常驻输入栏</b>，表单入口保留在底部 —— 拍板B：与 9 宫格并存，不与用户博弈</li>
+      <li><b>每条实质回答都带来源卡</b> —— 用户可验证，也倒逼知识库质量</li>
+      <li><b>澄清反问最多 1 次</b>，之后必给确定性按钮 —— 拍板A：反复追问是对话产品大忌</li>
+    </ul>
+  </div>
+  <div>
+    <h3>为什么转人工长这样</h3>
+    <ul>
+      <li>举报场景 AI <b>只安抚、只收集、不下结论</b>（"我不会替任何一方定性"）—— 法律风险边界</li>
+      <li>材料清单 <b>3/4 自动预填</b>（昵称/链接/描述从对话提取）—— 把"用户填表单"变成"AI 帮用户填"</li>
+      <li>工单卡给<b>工单号 + 响应时限 + 查看路径</b> —— 等待焦虑的解药是确定性</li>
+    </ul>
+  </div>
+  <div>
+    <h3>Assumptions（诚实声明）</h3>
+    <ul>
+      <li>色值从 App 真机截图提取，非官方 token（brand-spec.md 🔶）</li>
+      <li>「小Cee」命名沿用官方社区账号 IP 叫法 🔶</li>
+      <li>押金到账时效 1-3 工作日为演示假设值，上线前需运营确认口径（PRD 开放问题）</li>
+      <li>iPhone 壳规格移植自 huashu-design ios_frame.jsx（15 Pro）</li>
+    </ul>
+  </div>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+/* ── 全局 toast ── */
+let tt=null;
+function toast(s){const t=document.getElementById('toast');t.textContent=s;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),1800);}
+
+/* ── 屏①：点 chip → 追加用户气泡 + typing ── */
+document.getElementById('chips1').addEventListener('click',e=>{
+  if(!e.target.classList.contains('chip'))return;
+  const chat=document.getElementById('chat1'), txt=e.target.textContent;
+  const u=document.createElement('div');u.className='msg user';u.textContent=txt;chat.appendChild(u);
+  const ty=document.createElement('div');ty.className='typing';ty.innerHTML='<i></i><i></i><i></i>';chat.appendChild(ty);
+  chat.scrollTop=chat.scrollHeight;
+  setTimeout(()=>{ty.remove();
+    const a=document.createElement('div');a.className='msg ai';
+    a.innerHTML=txt.includes('举报')
+      ?'收到。这类问题会由人工审核同事优先处理——我先帮你把材料整理齐再转过去（见第 4 台设备的完整流程演示）。'
+      :'这个问题我可以直接回答～完整对话形态请看第 2、3 台设备的演示。<br><span style="font-size:11px;color:var(--text-dim)">（原型说明：五台设备各演示一种处置形态）</span>';
+    chat.appendChild(a);chat.scrollTop=chat.scrollHeight;},1100);
+});
+
+/* ── 满意度 ── */
+function fbUp(b){b.classList.add('on');b.parentElement.querySelector('.down').classList.remove('on-down');toast('感谢反馈，已记录 👍');}
+function fbDown(b){b.classList.add('on-down');b.parentElement.querySelector('.up').classList.remove('on');toast('已记录。需要的话可点「人工」转接');}
+
+/* ── 屏④：上传截图 → 工单生成 ── */
+function uploadShot(){
+  const li=document.getElementById('up-shot');
+  li.classList.remove('need');li.classList.add('got');
+  li.innerHTML='<span class="st">✓</span><span class="lab">证据截图</span><span class="val">IMG_0708.png</span>';
+  document.getElementById('clct-count').textContent='4/4';
+  const tk=document.getElementById('tk4');
+  tk.classList.remove('pending');
+  document.getElementById('tk4-tip').style.display='none';
+  document.getElementById('tk4-body').style.display='block';
+  toast('材料已齐，审核工单已生成 🎫');
+}
+
+/* ── 屏⑤：澄清选项 ── */
+function pickOpt(btn,which){
+  if(btn.classList.contains('picked'))return;
+  [...document.getElementById('opt5').children].forEach(b=>b.style.pointerEvents='none');
+  btn.classList.add('picked');
+  const chat=document.getElementById('chat5');
+  const ty=document.createElement('div');ty.className='typing';ty.innerHTML='<i></i><i></i><i></i>';chat.appendChild(ty);
+  chat.scrollTop=chat.scrollHeight;
+  setTimeout(()=>{ty.remove();
+    const a=document.createElement('div');a.className='msg ai en';
+    a.innerHTML=which===1
+      ?'With <b>online contract signing</b>, Wellcee holds your deposit <b>in escrow for the entire lease</b> — it never goes to the landlord directly. Rent is paid to the landlord only after you move in.<br><br>Without online signing, we don\'t recommend transferring any deposit before viewing the place and signing a formal contract.'
+      :'You can track it under <b>Me → My Contracts</b>. Once the landlord confirms, the deposit is refunded to your original payment account, usually within <b>1-3 business days</b> (subject to actual arrival — reply "agent" if it takes longer).';
+    chat.appendChild(a);
+    const s=document.createElement('div');s.className='source';s.innerHTML='📄 Source: Wellcee FAQ · Online Contract ›';chat.appendChild(s);
+    const f=document.createElement('div');f.className='fb';f.innerHTML='<button class="up" onclick="fbUp(this)">👍 Helpful</button><button class="down" onclick="fbDown(this)">👎</button>';chat.appendChild(f);
+    chat.scrollTop=chat.scrollHeight;},1000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1118 @@
+app:
+  description: Wellcee 智能客服 Agent Demo：语言检测→高风险规则→意图分类→四类处置（RAG直答/流程引导/mock押金查询/转人工收集）
+  icon: robot_face
+  icon_background: '#E0F2F0'
+  icon_type: emoji
+  mode: advanced-chat
+  name: Wellcee小Cee智能客服
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.19@5b68617c637b62d31e7f33a9f5677b76e88f81868fb04a728e208588564b72ea
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: 'Hi～我是小Cee，Wellcee 的 AI 助手 🤖 租房流程、押金托管、房源发布…都可以问我。复杂问题我会帮你转人工。
+
+      Hi, I''m Xiao Cee, Wellcee''s AI assistant. Ask me anything about renting!'
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 押金怎么退？
+    - 房东不回复怎么办？
+    - How does deposit escrow work?
+    - 怎么发布房源？
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        sourceType: start
+        targetType: code
+      id: start_n-source-lang_detect
+      source: start_n
+      sourceHandle: source
+      target: lang_detect
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: code
+        targetType: if-else
+      id: lang_detect-source-risk_check
+      source: lang_detect
+      sourceHandle: source
+      target: risk_check
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: if-else
+        targetType: llm
+      id: risk_check-true-llm_handoff
+      source: risk_check
+      sourceHandle: 'true'
+      target: llm_handoff
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: if-else
+        targetType: question-classifier
+      id: risk_check-false-classifier
+      source: risk_check
+      sourceHandle: 'false'
+      target: classifier
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: classifier-c_faq-kr_faq
+      source: classifier
+      sourceHandle: c_faq
+      target: kr_faq
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: kr_faq-source-llm_faq
+      source: kr_faq
+      sourceHandle: source
+      target: llm_faq
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: llm
+        targetType: answer
+      id: llm_faq-source-ans_faq
+      source: llm_faq
+      sourceHandle: source
+      target: ans_faq
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: question-classifier
+        targetType: knowledge-retrieval
+      id: classifier-c_guide-kr_guide
+      source: classifier
+      sourceHandle: c_guide
+      target: kr_guide
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: kr_guide-source-llm_guide
+      source: kr_guide
+      sourceHandle: source
+      target: llm_guide
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: llm
+        targetType: answer
+      id: llm_guide-source-ans_guide
+      source: llm_guide
+      sourceHandle: source
+      target: ans_guide
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: question-classifier
+        targetType: parameter-extractor
+      id: classifier-c_tool-param_ext
+      source: classifier
+      sourceHandle: c_tool
+      target: param_ext
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: parameter-extractor
+        targetType: code
+      id: param_ext-source-mock_query
+      source: param_ext
+      sourceHandle: source
+      target: mock_query
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: code
+        targetType: llm
+      id: mock_query-source-llm_tool
+      source: mock_query
+      sourceHandle: source
+      target: llm_tool
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: llm
+        targetType: answer
+      id: llm_tool-source-ans_tool
+      source: llm_tool
+      sourceHandle: source
+      target: ans_tool
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: question-classifier
+        targetType: llm
+      id: classifier-c_human-llm_handoff
+      source: classifier
+      sourceHandle: c_human
+      target: llm_handoff
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: llm
+        targetType: answer
+      id: llm_handoff-source-ans_handoff
+      source: llm_handoff
+      sourceHandle: source
+      target: ans_handoff
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: question-classifier
+        targetType: llm
+      id: classifier-c_chat-llm_chat
+      source: classifier
+      sourceHandle: c_chat
+      target: llm_chat
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: llm
+        targetType: answer
+      id: llm_chat-source-ans_chat
+      source: llm_chat
+      sourceHandle: source
+      target: ans_chat
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        sourceType: question-classifier
+        targetType: answer
+      id: classifier-c_unclear-ans_clarify
+      source: classifier
+      sourceHandle: c_unclear
+      target: ans_clarify
+      targetHandle: target
+      type: custom
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 开始
+        type: start
+        variables: []
+      height: 72
+      id: start_n
+      position:
+        x: 60
+        y: 400
+      positionAbsolute:
+        x: 60
+        y: 400
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "def main(query: str) -> dict:\n    zh = sum(1 for c in query if '\\\
+          u4e00' <= c <= '\\u9fff')\n    ratio = zh / max(len(query.strip()), 1)\n\
+          \    return {\"lang\": \"zh\" if ratio > 0.15 else \"en\"}\n"
+        code_language: python3
+        desc: ''
+        outputs:
+          lang:
+            children: null
+            type: string
+        selected: false
+        title: 语言检测
+        type: code
+        variables:
+        - value_selector:
+          - sys
+          - query
+          variable: query
+      height: 90
+      id: lang_detect
+      position:
+        x: 340
+        y: 400
+      positionAbsolute:
+        x: 340
+        y: 400
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: contains
+            id: rw0
+            value: 举报
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          - comparison_operator: contains
+            id: rw1
+            value: 被骗
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          - comparison_operator: contains
+            id: rw2
+            value: 骗子
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          - comparison_operator: contains
+            id: rw3
+            value: 诈骗
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          - comparison_operator: contains
+            id: rw4
+            value: 冒充
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          - comparison_operator: contains
+            id: rw5
+            value: 投诉
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          - comparison_operator: contains
+            id: rw6
+            value: 不给退
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          - comparison_operator: contains
+            id: rw7
+            value: 退不了
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          - comparison_operator: contains
+            id: rw8
+            value: 报警
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          - comparison_operator: contains
+            id: rw9
+            value: 人工
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          - comparison_operator: contains
+            id: rw10
+            value: scam
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          - comparison_operator: contains
+            id: rw11
+            value: fraud
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          - comparison_operator: contains
+            id: rw12
+            value: report
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          - comparison_operator: contains
+            id: rw13
+            value: human agent
+            varType: string
+            variable_selector:
+            - sys
+            - query
+          logical_operator: or
+        desc: ''
+        selected: false
+        title: 高风险规则
+        type: if-else
+      height: 90
+      id: risk_check
+      position:
+        x: 620
+        y: 400
+      positionAbsolute:
+        x: 620
+        y: 400
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        classes:
+        - id: c_faq
+          name: faq_direct：询问平台规则、功能说明、费用、安全性等有标准答案的问题。例：押金托管规则、怎么联系房东、收不到验证码、平台怎么收费
+        - id: c_guide
+          name: process_guide：询问"怎么操作、怎么办"的流程类问题，需要分步指导。例：线上签约怎么走、押金怎么退、怎么发布房源、学生认证怎么做
+        - id: c_tool
+          name: tool_deposit：查询自己这笔押金的退还状态或进度。例：我的押金退了吗、押金什么时候到账、帮我查下订单
+        - id: c_human
+          name: human_handoff：举报、纠纷、申诉、账号安全（换绑/注销）等需要人工处理的问题
+        - id: c_chat
+          name: chitchat：打招呼、闲聊、询问你是谁/是不是机器人、夸奖或吐槽助手本身
+        - id: c_unclear
+          name: unclear：表述模糊无法判断在问什么，或不属于以上任何类别
+        desc: ''
+        instruction: ''
+        model:
+          completion_params:
+            temperature: 0.1
+            thinking: false
+          mode: chat
+          name: deepseek-v4-flash
+          provider: langgenius/deepseek/deepseek
+        query_variable_selector:
+        - sys
+        - query
+        selected: false
+        title: 意图分类
+        topics: []
+        type: question-classifier
+        vision:
+          enabled: false
+      height: 90
+      id: classifier
+      position:
+        x: 900
+        y: 400
+      positionAbsolute:
+        x: 900
+        y: 400
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        dataset_ids:
+        - McRevhw/KxRGYrqVup2ya+i4eZdPGGmER30EDRfUO6uleSw507Ah2yQJEQAAndKA
+        desc: ''
+        multiple_retrieval_config:
+          reranking_enable: false
+          score_threshold: null
+          top_k: 3
+        query_variable_selector:
+        - sys
+        - query
+        retrieval_mode: multiple
+        selected: false
+        title: 知识检索-FAQ
+        type: knowledge-retrieval
+      height: 90
+      id: kr_faq
+      position:
+        x: 1200
+        y: 80
+      positionAbsolute:
+        x: 1200
+        y: 80
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - kr_faq
+          - result
+        desc: ''
+        model:
+          completion_params:
+            temperature: 0.3
+            thinking: false
+          mode: chat
+          name: deepseek-v4-pro
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - role: system
+          text: '你是小Cee，Wellcee（唯心所寓）的 AI 智能客服助手。Wellcee 是无中介费的房东直租+社交租房平台，覆盖 40+
+            城市、用户来自 170+ 国家。
+
+
+            【人设】年轻、友好、专业、有温度；适度使用 emoji（每条不超过 2 个）；称呼用户"你"。
+
+
+            【语言】lang={{#lang_detect.lang#}}。zh → 简体中文回答；en → 英文回答。用户中英夹杂时跟随其主要语言。
+
+
+            【红线（任何情况下不可违反）】
+
+            1. 金额、押金、退款时效、法律责任类信息：只能使用知识库/检索结果/查询结果中的原文，禁止编造或自行估算
+
+            2. 禁止承诺性/结论性表述："一定、保证、肯定能退、他确实是骗子"等
+
+            3. 时效类回答必须带限定语（"以实际到账为准，超时请转人工核查"）
+
+            4. 不评价纠纷双方对错，不预测处理结果
+
+            5. 被问身份时明示自己是 AI 助手
+
+            6. 答不了就诚实说，并给转人工路径；禁止编造
+
+
+            【本节点任务】仅基于下方检索结果回答用户问题。
+
+            规则：
+
+            - 答案内容必须完全来自检索结果，禁止补充检索结果之外的事实
+
+            - 若检索结果为空或与问题无关：诚实告知"这个问题我暂时没有可靠资料"，给出两条路径（点击"转人工"/换个说法再问），禁止编造，此时**不要**输出来源行
+
+            - 仅当回答引用了检索结果时，末尾另起一行标注来源；标签跟随回答语言——中文回答用「📖 来源：<条目问题>」，英文回答用「📖 Source:
+            <entry question>」
+
+            - 涉及金额/时效：使用原文表述并附限定语
+
+            检索结果：{{#context#}}'
+        - role: user
+          text: '{{#sys.query#}}'
+        selected: false
+        title: LLM-FAQ直答
+        type: llm
+        vision:
+          enabled: false
+      height: 90
+      id: llm_faq
+      position:
+        x: 1480
+        y: 80
+      positionAbsolute:
+        x: 1480
+        y: 80
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: '{{#llm_faq.text#}}'
+        desc: ''
+        selected: false
+        title: 回复-FAQ
+        type: answer
+        variables: []
+      height: 90
+      id: ans_faq
+      position:
+        x: 1760
+        y: 80
+      positionAbsolute:
+        x: 1760
+        y: 80
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        dataset_ids:
+        - McRevhw/KxRGYrqVup2ya+i4eZdPGGmER30EDRfUO6uleSw507Ah2yQJEQAAndKA
+        desc: ''
+        multiple_retrieval_config:
+          reranking_enable: false
+          score_threshold: null
+          top_k: 3
+        query_variable_selector:
+        - sys
+        - query
+        retrieval_mode: multiple
+        selected: false
+        title: 知识检索-流程
+        type: knowledge-retrieval
+      height: 90
+      id: kr_guide
+      position:
+        x: 1200
+        y: 240
+      positionAbsolute:
+        x: 1200
+        y: 240
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - kr_guide
+          - result
+        desc: ''
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 10
+        model:
+          completion_params:
+            temperature: 0.3
+            thinking: false
+          mode: chat
+          name: deepseek-v4-pro
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - role: system
+          text: '你是小Cee，Wellcee（唯心所寓）的 AI 智能客服助手。Wellcee 是无中介费的房东直租+社交租房平台，覆盖 40+
+            城市、用户来自 170+ 国家。
+
+
+            【人设】年轻、友好、专业、有温度；适度使用 emoji（每条不超过 2 个）；称呼用户"你"。
+
+
+            【语言】lang={{#lang_detect.lang#}}。zh → 简体中文回答；en → 英文回答。用户中英夹杂时跟随其主要语言。
+
+
+            【红线（任何情况下不可违反）】
+
+            1. 金额、押金、退款时效、法律责任类信息：只能使用知识库/检索结果/查询结果中的原文，禁止编造或自行估算
+
+            2. 禁止承诺性/结论性表述："一定、保证、肯定能退、他确实是骗子"等
+
+            3. 时效类回答必须带限定语（"以实际到账为准，超时请转人工核查"）
+
+            4. 不评价纠纷双方对错，不预测处理结果
+
+            5. 被问身份时明示自己是 AI 助手
+
+            6. 答不了就诚实说，并给转人工路径；禁止编造
+
+
+            【本节点任务】用户在问操作流程。基于检索结果把流程拆成编号步骤，分步引导，不一次灌完。
+
+            规则：
+
+            - 第一轮：先确认关键分支条件（例：押金问题先问"是否走了线上签约？"；发布问题先确认角色），给对应路径的第 1-2 步，末尾问"继续吗？"
+
+            - 用户确认后再给后续步骤
+
+            - 每步一句话说清：在哪个页面、点什么、会看到什么
+
+            - 检索结果覆盖不了的步骤细节，明说"这一步的具体入口以 App 实际界面为准"，不编造按钮名
+
+            检索结果：{{#context#}}'
+        - role: user
+          text: '{{#sys.query#}}'
+        selected: false
+        title: LLM-流程引导
+        type: llm
+        vision:
+          enabled: false
+      height: 90
+      id: llm_guide
+      position:
+        x: 1480
+        y: 240
+      positionAbsolute:
+        x: 1480
+        y: 240
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: '{{#llm_guide.text#}}'
+        desc: ''
+        selected: false
+        title: 回复-流程
+        type: answer
+        variables: []
+      height: 90
+      id: ans_guide
+      position:
+        x: 1760
+        y: 240
+      positionAbsolute:
+        x: 1760
+        y: 240
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        desc: ''
+        instruction: ''
+        model:
+          completion_params:
+            temperature: 0.1
+            thinking: false
+          mode: chat
+          name: deepseek-v4-flash
+          provider: langgenius/deepseek/deepseek
+        parameters:
+        - description: 用户消息中的订单号，通常为一串数字；没有提供则为空字符串
+          name: order_id
+          required: false
+          type: string
+        query:
+        - sys
+        - query
+        reasoning_mode: prompt
+        selected: false
+        title: 提取订单号
+        type: parameter-extractor
+        vision:
+          enabled: false
+      height: 90
+      id: param_ext
+      position:
+        x: 1200
+        y: 420
+      positionAbsolute:
+        x: 1200
+        y: 420
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "def main(order_id: str) -> dict:\n    oid = \"\".join(ch for ch in\
+          \ str(order_id or \"\") if ch.isdigit())\n    if not oid:\n        return\
+          \ {\"found\": \"none\", \"status\": \"\", \"eta\": \"\", \"amount\": \"\"\
+          }\n    tail = int(oid[-1])\n    if tail in (1, 2, 3):\n        return {\"\
+          found\": \"yes\", \"status\": \"托管中\", \"eta\": \"租期结束后可发起退还\", \"amount\"\
+          : \"3000.00\"}\n    if tail in (4, 5, 6):\n        return {\"found\": \"\
+          yes\", \"status\": \"退款处理中\", \"eta\": \"预计 1-3 个工作日到账（以实际到账为准）\", \"amount\"\
+          : \"3000.00\"}\n    if tail in (7, 8, 9):\n        return {\"found\": \"\
+          yes\", \"status\": \"已退回\", \"eta\": \"已退回原支付账户\", \"amount\": \"3000.00\"\
+          }\n    return {\"found\": \"no\", \"status\": \"\", \"eta\": \"\", \"amount\"\
+          : \"\"}\n"
+        code_language: python3
+        desc: ''
+        outputs:
+          amount:
+            children: null
+            type: string
+          eta:
+            children: null
+            type: string
+          found:
+            children: null
+            type: string
+          status:
+            children: null
+            type: string
+        selected: false
+        title: mock押金查询
+        type: code
+        variables:
+        - value_selector:
+          - param_ext
+          - order_id
+          variable: order_id
+      height: 90
+      id: mock_query
+      position:
+        x: 1480
+        y: 420
+      positionAbsolute:
+        x: 1480
+        y: 420
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        model:
+          completion_params:
+            temperature: 0.3
+            thinking: false
+          mode: chat
+          name: deepseek-v4-pro
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - role: system
+          text: '你是小Cee，Wellcee（唯心所寓）的 AI 智能客服助手。Wellcee 是无中介费的房东直租+社交租房平台，覆盖 40+
+            城市、用户来自 170+ 国家。
+
+
+            【人设】年轻、友好、专业、有温度；适度使用 emoji（每条不超过 2 个）；称呼用户"你"。
+
+
+            【语言】lang={{#lang_detect.lang#}}。zh → 简体中文回答；en → 英文回答。用户中英夹杂时跟随其主要语言。
+
+
+            【红线（任何情况下不可违反）】
+
+            1. 金额、押金、退款时效、法律责任类信息：只能使用知识库/检索结果/查询结果中的原文，禁止编造或自行估算
+
+            2. 禁止承诺性/结论性表述："一定、保证、肯定能退、他确实是骗子"等
+
+            3. 时效类回答必须带限定语（"以实际到账为准，超时请转人工核查"）
+
+            4. 不评价纠纷双方对错，不预测处理结果
+
+            5. 被问身份时明示自己是 AI 助手
+
+            6. 答不了就诚实说，并给转人工路径；禁止编造
+
+
+            【本节点任务】根据查询结果回复用户押金状态。
+
+            查询结果：found={{#mock_query.found#}}，status={{#mock_query.status#}}，eta={{#mock_query.eta#}}，amount={{#mock_query.amount#}}
+            元
+
+            规则：
+
+            - found=none（用户没给订单号）：请用户提供订单号（在 App「我的-我的签约」可查看），不要瞎猜
+
+            - found=no：告知未查到该订单，请核对订单号，或点"转人工"人工核查
+
+            - found=yes：报状态；金额、时效必须原样引用查询结果字段；附"以实际到账为准"
+
+            - status=退款处理中：加一句"超过 3 个工作日未到账，随时转人工帮你核查" '
+        - role: user
+          text: '{{#sys.query#}}'
+        selected: false
+        title: LLM-查询回复
+        type: llm
+        vision:
+          enabled: false
+      height: 90
+      id: llm_tool
+      position:
+        x: 1760
+        y: 420
+      positionAbsolute:
+        x: 1760
+        y: 420
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: '{{#llm_tool.text#}}'
+        desc: ''
+        selected: false
+        title: 回复-查询
+        type: answer
+        variables: []
+      height: 90
+      id: ans_tool
+      position:
+        x: 2040
+        y: 420
+      positionAbsolute:
+        x: 2040
+        y: 420
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: true
+            size: 10
+        model:
+          completion_params:
+            temperature: 0.3
+            thinking: false
+          mode: chat
+          name: deepseek-v4-pro
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - role: system
+          text: '你是小Cee，Wellcee（唯心所寓）的 AI 智能客服助手。Wellcee 是无中介费的房东直租+社交租房平台，覆盖 40+
+            城市、用户来自 170+ 国家。
+
+
+            【人设】年轻、友好、专业、有温度；适度使用 emoji（每条不超过 2 个）；称呼用户"你"。
+
+
+            【语言】lang={{#lang_detect.lang#}}。zh → 简体中文回答；en → 英文回答。用户中英夹杂时跟随其主要语言。
+
+
+            【红线（任何情况下不可违反）】
+
+            1. 金额、押金、退款时效、法律责任类信息：只能使用知识库/检索结果/查询结果中的原文，禁止编造或自行估算
+
+            2. 禁止承诺性/结论性表述："一定、保证、肯定能退、他确实是骗子"等
+
+            3. 时效类回答必须带限定语（"以实际到账为准，超时请转人工核查"）
+
+            4. 不评价纠纷双方对错，不预测处理结果
+
+            5. 被问身份时明示自己是 AI 助手
+
+            6. 答不了就诚实说，并给转人工路径；禁止编造
+
+
+            【本节点任务】用户的问题需要人工处理（举报/纠纷/申诉/账号安全/主动要人工）。你负责：共情 → 收集信息 → 生成工单摘要。你不解决问题本身，也绝不下结论。
+
+            必收字段：① 问题类型 ② 对方昵称或房源链接（如涉及他人）③ 订单号（如涉及押金/签约）④ 用户诉求 ⑤ 证据说明（有无聊天记录/转账凭证等截图）
+
+            规则：
+
+            - 开场先共情一句；只陈述平台会核实处理，禁止"他确实是中介/肯定能退"类判断
+
+            - 对照对话历史：已提供的字段不重复问；一次只问 1-2 个缺失字段
+
+            - 用户提及资金损失：提醒保留转账凭证与聊天记录、建议报警，不预测追回结果
+
+            - 字段收齐后输出工单摘要并请用户确认：
+
+            ---
+
+            📋 工单摘要（草稿）
+
+            问题类型：
+
+            涉及对象/订单：
+
+            用户诉求：
+
+            证据：
+
+            对话要点：（一句话）
+
+            ---
+
+            信息对吗？确认后我会转交人工客服跟进。
+
+            - 用户确认后：告知已提交，人工客服预计 1-2 个工作日内跟进（以实际为准），安抚收尾，并提醒后续可在工单里补充上传截图证据'
+        - role: user
+          text: '{{#sys.query#}}'
+        selected: false
+        title: LLM-转人工收集
+        type: llm
+        vision:
+          enabled: false
+      height: 90
+      id: llm_handoff
+      position:
+        x: 1200
+        y: 620
+      positionAbsolute:
+        x: 1200
+        y: 620
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: '{{#llm_handoff.text#}}'
+        desc: ''
+        selected: false
+        title: 回复-转人工
+        type: answer
+        variables: []
+      height: 90
+      id: ans_handoff
+      position:
+        x: 1480
+        y: 620
+      positionAbsolute:
+        x: 1480
+        y: 620
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        model:
+          completion_params:
+            temperature: 0.7
+            thinking: false
+          mode: chat
+          name: deepseek-v4-flash
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - role: system
+          text: '你是小Cee，Wellcee（唯心所寓）的 AI 智能客服助手。Wellcee 是无中介费的房东直租+社交租房平台，覆盖 40+
+            城市、用户来自 170+ 国家。
+
+
+            【人设】年轻、友好、专业、有温度；适度使用 emoji（每条不超过 2 个）；称呼用户"你"。
+
+
+            【语言】lang={{#lang_detect.lang#}}。zh → 简体中文回答；en → 英文回答。用户中英夹杂时跟随其主要语言。
+
+
+            【红线（任何情况下不可违反）】
+
+            1. 金额、押金、退款时效、法律责任类信息：只能使用知识库/检索结果/查询结果中的原文，禁止编造或自行估算
+
+            2. 禁止承诺性/结论性表述："一定、保证、肯定能退、他确实是骗子"等
+
+            3. 时效类回答必须带限定语（"以实际到账为准，超时请转人工核查"）
+
+            4. 不评价纠纷双方对错，不预测处理结果
+
+            5. 被问身份时明示自己是 AI 助手
+
+            6. 答不了就诚实说，并给转人工路径；禁止编造
+
+
+            【本节点任务】用户在闲聊或问你身份。按人设简短回应（不超过 2 句），然后自然引导回业务，例如："有什么租房相关的问题我可以帮你？😊"
+
+            被问"你是人工吗/机器人吗"：明确说明自己是 AI 助手小Cee，复杂问题可以随时转人工。'
+        - role: user
+          text: '{{#sys.query#}}'
+        selected: false
+        title: LLM-闲聊人设
+        type: llm
+        vision:
+          enabled: false
+      height: 90
+      id: llm_chat
+      position:
+        x: 1200
+        y: 780
+      positionAbsolute:
+        x: 1200
+        y: 780
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: '{{#llm_chat.text#}}'
+        desc: ''
+        selected: false
+        title: 回复-闲聊
+        type: answer
+        variables: []
+      height: 90
+      id: ans_chat
+      position:
+        x: 1480
+        y: 780
+      positionAbsolute:
+        x: 1480
+        y: 780
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        answer: '我想先确认一下你想办的事，这样能直接给你准确答案～你想问的是：
+
+          1️⃣ 押金 / 退款相关
+
+          2️⃣ 找房 / 联系房东
+
+          3️⃣ 房源发布 / 审核（我是房东）
+
+          4️⃣ 举报 / 纠纷
+
+          5️⃣ 都不是——直接换个说法描述，或回复「人工」转人工客服'
+        desc: ''
+        selected: false
+        title: 澄清反问
+        type: answer
+        variables: []
+      height: 140
+      id: ans_clarify
+      position:
+        x: 1200
+        y: 920
+      positionAbsolute:
+        x: 1200
+        y: 920
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.6
+  rag_pipeline_variables: []

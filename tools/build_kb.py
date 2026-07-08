@@ -1,0 +1,239 @@
+# -*- coding: utf-8 -*-
+"""生成 05-知识库/knowledge-base.xlsx（Step 5 交付物）
+数据源：wellcee.com/cn/faq + /en/faq + /cn/about（2026-07-08 抓取）
+用法：python _tools/build_kb.py  （在项目根目录运行）
+"""
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+
+TEAL = "17A398"
+YELLOW = "FFF2CC"   # 假设条目底色
+HDR_FONT = Font(name="微软雅黑", size=10, bold=True, color="FFFFFF")
+BODY_FONT = Font(name="微软雅黑", size=10)
+WRAP = Alignment(wrap_text=True, vertical="top")
+THIN = Border(*[Side(style="thin", color="D9D9D9")] * 4)
+
+# ---------------- Sheet1 知识库总表 ----------------
+KB_HEADERS = ["kb_id", "分类", "问题（中）", "答案（中）", "问题（英）", "答案（英）",
+              "意图标签", "适用角色", "来源", "状态", "备注"]
+
+# 状态: 官方原文 / 官方切分 / 假设🔶 / 产品定义
+KB = [
+ # --- A 账号与验证 ---
+ ("KB001","账号与验证","为什么收不到手机验证码？",
+  "请先核对输入的手机号码和国家区号是否正确。如果您身在国外，收取验证码可能需要更长时间，请耐心等待或稍后重试。若仍无法收到，可转人工客服协助处理。",
+  "Why can't I receive the mobile verification code?",
+  "Please double-check the phone number and country code. International users may experience delays—please wait a moment and retry. If the problem persists, transfer to a human agent for help.",
+  "A1","通用","官网FAQ#2","官方切分","原文兜底为邮箱，Agent 场景改为转人工话术"),
+ ("KB002","账号与验证","学生认证怎么做？",
+  "在 App「我的-认证中心」提交学生证或录取通知书照片，审核通过后获得学生标识。证件请拍摄清晰、四角完整。若证件无法识别，可重新拍摄上传或转人工协助。🔶以上路径与材料为假设，待与运营确认。",
+  "How do I complete student verification?",
+  "Go to 'Me - Verification Center' in the App and submit a photo of your student ID or admission letter. Make sure the photo is clear and complete. If recognition fails, re-upload or transfer to a human agent. 🔶Assumed flow, to be confirmed with Operations.",
+  "A11","租客","缺口G02","假设🔶","App 有认证入口（实测截图），流程细节假设"),
+ # --- B 找房与联系 ---
+ ("KB003","找房与联系","我是租客，如何通过 Wellcee 联系房东？",
+  "Wellcee 是房东与租客双向选择的平台。您只需完善个人基本信息和自我介绍，就可以使用平台消息功能与房东直接联系。为确保不错过消息，请记得在手机中打开 App 消息推送。",
+  "I am a tenant. How do I contact the landlord through Wellcee?",
+  "Wellcee is a two-way choice platform for landlords and tenants. Complete your basic information and self-introduction, then chat with landlords directly via in-app messages. Enable App push notifications so you never miss a reply.",
+  "A2","租客","官网FAQ#1","官方原文","术语统一：房主→房东"),
+ ("KB004","找房与联系","房东不回复消息怎么办？",
+  "建议您：① 发消息前认真完善自我介绍，可显著提高房东回复率；② 着急入住的话，同时多联系几位最近活跃的房东；③ 开通「短信推送」功能——您发送消息后房东会收到短信通知，沟通效率更高；④ 优质个人房源出租很快，建议常刷新房源列表关注新房源。",
+  "What should I do when the landlord doesn't reply?",
+  "Tips: ① Write a detailed self-introduction before messaging—it greatly increases reply rates; ② If urgent, contact several recently active landlords at the same time; ③ Enable 'SMS Push Notification' so landlords get an SMS when you message them; ④ Quality listings rent out fast—refresh the listing feed often.",
+  "A3","租客","官网FAQ#5","官方原文","长答案已拆步骤"),
+ ("KB005","找房与联系","怎么发布找室友/转租信息？收费吗？",
+  "在 App 首页选择「找室友」或「转租」入口，填写房源/需求信息即可发布。个人用户发布转租、找室友信息免费。🔶入口路径为假设，待与运营确认；免费政策依据 App Store 用户评论（个人转租免费）。",
+  "How do I post a roommate-wanted or sublet listing? Is it free?",
+  "Choose 'Find Roommate' or 'Sublet' on the App home page and fill in your listing details. Posting sublet/roommate listings is free for individual users. 🔶Assumed entry path, to be confirmed; free policy based on App Store user reviews.",
+  "A12","租客","缺口G09","假设🔶","P1 意图，语料先备"),
+ # --- C 线上签约与押金 ---
+ ("KB006","线上签约与押金","什么是 Wellcee 线上签约？",
+  "线上签约（可选）可以有效避免房东和租客在租房过程中遇到的纠纷难以协调的问题。平台将全程托管租房押金，直至租期结束。租金在租客入住后由租客直接支付给房东。一旦发生租房纠纷，Wellcee 客服人员会及时介入。",
+  "What is Signing Lease Online (optional)?",
+  "Signing Lease Online (optional) helps prevent rental disputes that are hard to mediate. Wellcee holds the deposit in escrow for the entire lease term. Rent is paid directly to the landlord after move-in. If a dispute occurs, Wellcee's customer service will step in promptly.",
+  "A4","租客","官网FAQ#3","官方原文","红线引用源：押金托管规则"),
+ ("KB007","线上签约与押金","押金托管是什么规则？押金安全吗？",
+  "选择线上签约后，租房押金由 Wellcee 平台全程托管，直至租期结束，不经房东之手；租金则在入住后直接支付给房东。这样可避免押金不退等常见纠纷。",
+  "How does deposit escrow work? Is my deposit safe?",
+  "With online signing, your deposit is held in escrow by Wellcee for the whole lease term—the landlord never holds it. Rent is paid directly to the landlord after move-in. This prevents common disputes such as deposit not being returned.",
+  "A5","租客","官网FAQ#3切分","官方切分","红线：涉金额引本条原文"),
+ ("KB008","线上签约与押金","租期结束后押金怎么退？",
+  "两条路径：① 房东在「我的发布」页面操作「退还押金」，押金从平台直接返回租客的支付账户；② 租客也可主动发起「退还押金」申请，房东通过后押金原路退回。如果房东认为租客有违约或损坏房屋，Wellcee 将参与三方协商，确保赔偿结果公开、公平。",
+  "How do I get my deposit back after the lease ends?",
+  "Two ways: ① The landlord taps 'Return Deposit' on the 'My Listing' page, and the deposit goes straight back to the tenant's payment account; ② The tenant can also initiate a 'Return Deposit' request—once the landlord approves, the deposit is refunded via the original channel. If the landlord claims breach or damage, Wellcee joins a three-party negotiation to ensure a fair, transparent outcome.",
+  "A6","租客+房东","官网FAQ#4","官方原文","长答案已拆路径"),
+ ("KB009","线上签约与押金","房东一直不同意我的入住申请，押金能退吗？",
+  "可以。如果房东久未同意您的入住申请，您可以随时申请原路退还租房押金和服务费。",
+  "The landlord hasn't approved my move-in request. Can I get a refund?",
+  "Yes. If the landlord fails to approve your move-in request for a long time, you can request a full refund of the deposit and service fee via the original payment channel at any time.",
+  "A6","租客","官网FAQ#4切分","官方切分","高价值原子条目：退款场景"),
+ ("KB010","线上签约与押金","押金退还后多久到账？",
+  "🔶押金退回原支付账户一般需要 1-3 个工作日（视支付渠道而定），以实际到账时间为准。如超过 3 个工作日仍未到账，请转人工客服核查。（假设值，上线前需与财务/运营确认口径）",
+  "How long does the deposit refund take to arrive?",
+  "🔶Refunds usually arrive within 1-3 business days depending on the payment channel—actual arrival time prevails. If it takes longer than 3 business days, please transfer to a human agent to check. (Assumed value, to be confirmed before launch)",
+  "A6","租客","缺口G01","假设🔶","法务红线：必须带「以实际到账为准」限定语"),
+ ("KB011","线上签约与押金","发生租房纠纷，平台怎么处理？",
+  "一旦发生租房纠纷，Wellcee 客服人员会及时介入，参与三方协商，确保结果公开、公平。平台可提供合同模板、房东实名信息等协助。🔶具体调解流程与所需材料清单待与客服团队确认。",
+  "How does Wellcee handle rental disputes?",
+  "When a dispute occurs, Wellcee's customer service steps in promptly for a three-party negotiation, ensuring an open and fair outcome. The platform can assist with contract templates and the landlord's verified identity information. 🔶Detailed mediation steps and required materials to be confirmed with the CS team.",
+  "A10","通用","官网FAQ#3/#4切分+横评","官方切分","AI 只陈述流程，不评价对错、不预测结果"),
+ ("KB012","线上签约与押金","租金是交给平台还是房东？",
+  "租金不经过平台。线上签约模式下，平台只托管押金；房屋租金建议您在入住之后，直接转账给房东。",
+  "Do I pay rent to the platform or the landlord?",
+  "Rent never goes through the platform. Under online signing, Wellcee only escrows the deposit; you pay rent directly to the landlord—ideally after you have moved in.",
+  "A7","租客","官网FAQ#3/#10切分","官方切分",""),
+ # --- D 资金安全与防骗 ---
+ ("KB013","资金安全与防骗","还没看房，房东就让我转账，正常吗？",
+  "请警惕！我们不建议租客在未经现场看房、未签署正规合同之前，绕过 Wellcee 平台直接转账给房东。为避免租房受骗、押金无法退回，建议使用 Wellcee 线上签约，平台会托管押金直至租期结束；租金在入住后再转给房东。",
+  "The landlord asks me to transfer money before viewing. Is this normal?",
+  "Be careful! We advise against transferring money to a landlord before viewing the property and signing a formal contract. To avoid scams and unreturnable deposits, use Wellcee's online signing—the platform escrows your deposit until the lease ends, and you pay rent only after moving in.",
+  "A8","租客","官网FAQ#10","官方原文","防骗核心话术"),
+ ("KB014","资金安全与防骗","该不该给房东付定金？",
+  "定金一般用来锁定房源，即租客通过定金确保房东不再接受其他租客。如果您支付定金后决定不再入住，房东会有相应损失（定金通常不退）。因此 Wellcee 建议：如果不确定要租该房源，就不要支付定金。",
+  "Should I pay the landlord a holding deposit?",
+  "A holding deposit locks the property—it assures the landlord you'll rent it. If you pay and then change your mind, the landlord bears a loss and the deposit is usually not refundable. Wellcee's advice: don't pay a holding deposit unless you're sure about renting.",
+  "A8","租客","官网FAQ#13","官方原文",""),
+ ("KB015","资金安全与防骗","对方好像是中介冒充房东/我被骗了，怎么举报？",
+  "Wellcee 是无中介平台，中介冒充房东属于严重违规。请通过对话页右上角「举报」或联系客服提交：对方昵称/主页链接、房源链接、聊天记录或转账凭证截图。平台核实后会对违规账号下架处理。如已发生资金损失，请同时保留证据并报警。🔶举报入口路径为 App 实测推断，待确认。",
+  "Someone seems to be an agent posing as a landlord / I got scammed. How do I report?",
+  "Wellcee is a no-agent platform—agents posing as landlords are a serious violation. Report via the 'Report' button on the chat page or contact customer service with: the user's nickname/profile link, the listing link, and screenshots of chats or transfer records. Verified violators will be taken down. If you've lost money, keep all evidence and contact the police. 🔶Entry path inferred from App testing, to be confirmed.",
+  "A9","租客","缺口G05+豆瓣避雷帖","假设🔶","必转人工意图；本条仅用于引导收集信息"),
+ # --- E 房东侧 ---
+ ("KB016","房东侧","怎么发布房源？",
+  "在 App 底部点击「发布」，选择房源类型（整租/合租/转租），按引导填写位置、租金、入住时间、房屋介绍并上传照片，提交后等待审核上线。房子租出去了可在「我的发布」中操作下架。🔶操作路径为 App 实测推断，待确认。",
+  "How do I post a listing?",
+  "Tap 'Post' at the bottom of the App, choose the listing type (entire place / shared room / sublet), fill in location, rent, move-in date and description, upload photos, then submit for review. Once rented, take the listing down via 'My Listing'. 🔶Path inferred from App testing, to be confirmed.",
+  "B1","房东","缺口G04","假设🔶",""),
+ ("KB017","房东侧","房源发布后审核要多久？",
+  "🔶房源审核一般在 1-3 个工作日内完成（假设值，待与审核团队确认）。您可以在「我的发布」中查看审核状态。若长时间未通过，请转人工客服核查。",
+  "How long does listing review take?",
+  "🔶Reviews are usually completed within 1-3 business days (assumed value, to be confirmed with the review team). Check the status under 'My Listing'. If it takes unusually long, transfer to a human agent.",
+  "B2","房东","缺口G04","假设🔶","拍板决策：B2 为静态话术，不做工具查询"),
+ ("KB018","房东侧","为什么我的房源需要认证？",
+  "Wellcee 非常注重用户信任体系的管理。系统判定房源需要认证才能上线的原因可能包括：① 您是新用户第一次发布房源；② 房源有被用户投诉、举报的情况；③ 您多次更换登录的 IP/设备；④ 房源照片与其他用户照片重复。房源认证如果失败，认证费用将原路返还；认证成功后房源可正常上线。",
+  "Why does my listing need verification?",
+  "Wellcee takes its trust system seriously. Verification may be required because: ① you're a new user posting for the first time; ② the listing has been complained about or reported; ③ your login IP/device changed multiple times; ④ the photos duplicate another user's. If verification fails, the fee is refunded via the original channel; once verified, the listing goes live normally.",
+  "B3","房东","官网FAQ#11","官方原文","长答案已拆条"),
+ ("KB019","房东侧","房源认证成功了为什么还被下架？",
+  "房源被系统下架的可能原因：① 被用户举报存在收取中介费的行为；② 房源图片、价格与实际情况不符；③ 存在骚扰、辱骂用户的行为；④ 长时间未登录或未回复用户消息。如认为下架有误，可转人工客服申诉。",
+  "Why was my verified listing taken down?",
+  "Possible reasons: ① reported for charging agency fees; ② photos or price don't match reality; ③ harassment or abusive behavior toward users; ④ prolonged inactivity or not replying to messages. If you believe this is a mistake, transfer to a human agent to appeal.",
+  "B4","房东","官网FAQ#12","官方原文","申诉走转人工"),
+ ("KB020","房东侧","怎么让我的房源更受欢迎？",
+  "建议：① 适当清洁整理房间，在光线好时拍摄照片；② 房屋介绍写得细节化、人性化；③ 介绍准备多语言版本，覆盖更多租客；④ 分享有趣的生活方式动态，会出现在 App 首页增加曝光；⑤ 把房源链接分享到微信、Facebook、微博，房源会被优先置顶/曝光；⑥ 也可使用平台的房源推广服务，在租房社群和系统中定向推广。",
+  "How do I make my listing more popular?",
+  "Tips: ① Tidy the room and shoot photos in good light; ② write a detailed, personal description; ③ provide multilingual versions to reach more tenants; ④ share lifestyle moments—they appear on the App home page for extra exposure; ⑤ share your listing link on WeChat, Facebook or Weibo to get priority placement; ⑥ consider Wellcee's Listing Promotion service for targeted promotion.",
+  "B5","房东","官网FAQ#8","官方原文","P1 意图，运营建议类"),
+ ("KB021","房东侧","发布多套房源怎么收费？会员有什么权益？",
+  "个人房东发布 1 套房源免费；发布 2 套及以上房源需要付费（依据用户社区反馈）。🔶具体收费标准与会员权益请以 App 内「会员中心」展示为准（价格表为缺口，待与商业化团队确认）。如需了解房源推广服务，可转人工或查看 App 内推广页。",
+  "What are the fees for multiple listings? What are membership benefits?",
+  "One listing is free for individual landlords; posting 2 or more requires a paid plan (per user community feedback). 🔶Exact pricing and membership benefits: please refer to the 'Membership Center' in the App (price sheet is a known gap, to be confirmed with the monetization team). For Listing Promotion details, transfer to a human agent or check the in-App promotion page.",
+  "B6","房东","缺口G03+AppStore评论","假设🔶","涉金额：不报具体价格，导向官方页面"),
+ # --- F 技术问题 ---
+ ("KB022","技术问题","IM 消息发不出去怎么办？",
+  "IM 聊天功能在某些网络环境下可能不稳定。建议：① 先切换网络环境（Wi-Fi↔流量）再试；② 重启 App；③ 检查 App 是否为最新版本。若仍无法发送，请转人工客服。",
+  "I can't send messages via IM. What should I do?",
+  "IM chat can be unstable on certain networks. Try: ① switching networks (Wi-Fi ↔ mobile data); ② restarting the App; ③ updating to the latest version. If it still fails, transfer to a human agent.",
+  "C1","通用","官网FAQ#9","官方切分","原文兜底邮箱→转人工"),
+ ("KB023","技术问题","为什么页面打开很慢？",
+  "如果您身在国外，访问速度偏慢可能是国内流量访问限制的原因，我们正在加速配置海外服务器。如果您在中国，建议关闭 VPN——VPN 开启可能影响网站/App 的正常访问。",
+  "Why do pages load slowly?",
+  "If you're overseas, slowness may come from cross-border traffic restrictions—we're deploying overseas servers to speed this up. If you're in China, please disable your VPN, which can interfere with normal access.",
+  "C2","通用","官网FAQ#7","官方原文",""),
+ ("KB024","技术问题","App 用不了/信息保存失败怎么办？",
+  "建议先到应用商店将 Wellcee App 更新到最新版本：安卓需 10.0 以上，iOS 需 15.0 以上；网页端推荐使用 Chrome 或 Safari 浏览器。如仍有问题，请提供机型、系统版本和问题截图，转人工客服跟进。",
+  "The App isn't working / my info won't save. What should I do?",
+  "Update the App to the latest version first: Android 10.0+ or iOS 15.0+. On PC, use Chrome or Safari. If the problem persists, provide your device model, OS version and a screenshot, then transfer to a human agent.",
+  "C3","通用","官网FAQ#6","官方切分","Bug反馈流程：AI 收集三要素生成工单"),
+ ("KB025","技术问题","怎么换绑手机号/注销账号？",
+  "🔶换绑手机与账号注销涉及账号安全，需要人工核验身份后操作。请转人工客服，并准备好注册手机号及近期登录信息以便核验。（流程为假设，待与技术支持确认）",
+  "How do I change my phone number or delete my account?",
+  "🔶Changing the bound phone number or deleting an account involves account security and requires manual identity verification. Please transfer to a human agent and have your registered phone number and recent login info ready. (Assumed flow, to be confirmed)",
+  "C4","通用","缺口G10","假设🔶","P1 意图；操作类直接转人工"),
+ # --- G 平台与人设 ---
+ ("KB026","平台与人设","Wellcee 是什么平台？",
+  "Wellcee（唯心所寓）成立于 2017 年，是一个无中介费的房东直租+社交平台，主打真实房源、实名认证与多重安全保障。愿景是「让世界上每个有可能的地方都变成家」。目前覆盖全国 40+ 城市，用户来自 170+ 国家，提供租房/找室友、社区分享和宠物领养三大板块。",
+  "What is Wellcee?",
+  "Wellcee, founded in 2017, is a commission-free direct-rental and social platform featuring verified real listings, real-name authentication and multiple safety guarantees. Its vision: 'Make every possible place in the world feel like home.' It covers 40+ cities in China with users from 170+ countries, offering rental/roommate matching, community sharing and pet adoption.",
+  "C5","通用","官网about页","官方原文","人设/门面话术素材"),
+ ("KB027","平台与人设","你是机器人吗？你是谁？",
+  "我是小Cee，Wellcee 的 AI 智能助手🤖，可以帮你解答租房流程、押金托管、房源发布等问题。我是 AI，回答仅供参考；涉及纠纷、退款等复杂问题，我会帮你转接人工客服。有什么可以帮你的吗？",
+  "Are you a bot? Who are you?",
+  "I'm Xiao Cee, Wellcee's AI assistant 🤖. I can help with rental flows, deposit escrow, listing questions and more. I'm an AI and my answers are for reference; for complex issues like disputes or refunds, I'll connect you to a human agent. How can I help?",
+  "C5","通用","产品定义（PRD 5.5）","产品定义","红线：明示 AI 身份；命名沿用官方社区 IP「小cee」"),
+]
+
+# ---------------- Sheet2 缺口清单 ----------------
+GAP_HEADERS = ["缺口ID","关联意图","缺什么","真实工作中问谁","Demo 处理方式","优先级"]
+GAPS = [
+ ("G01","A6 押金退还","押金退回到账时效官网未写","客服组长/财务","KB010 假设「1-3 个工作日」+「以实际到账为准」限定语","P0"),
+ ("G02","A11 学生认证","认证入口、材料、审核时长均无公开文档","运营","KB002 按 App 实测入口假设流程","P0"),
+ ("G03","B6 收费/会员","多套房源收费标准与会员价目表无公开页","商业化运营","KB021 不报具体价格，导向 App 会员中心","P0"),
+ ("G04","B1/B2 发布与审核","发布步骤 SOP、审核时效承诺无公开文档","审核团队","KB016/KB017 假设「1-3 个工作日」","P0"),
+ ("G05","A9 举报","举报入口路径、处理流程与反馈时效无公开文档","风控/审核","KB015 按 App 实测推断入口；流程假设","P0"),
+ ("G06","A10 纠纷调解","调解详细流程、所需材料清单只有一句「客服介入」","客服组长","KB011 引官方原文+材料清单留待人工","P0"),
+ ("G07","A5/A7 红线引用","服务条款全文无公开网页（/terms 404，条款疑在 App 内）","法务","红线条目暂以 FAQ 原文为引用源","P0"),
+ ("G08","A8 防骗","无独立《安全指南》页面","运营","用 FAQ 资金安全条目（KB013/014）覆盖","P1"),
+ ("G09","A12 转租/找室友","转租规则、收费政策无公开文档","运营","KB005 依据 App Store 评论假设「个人免费」","P1"),
+ ("G10","C4 账号管理","换绑手机/注销流程无公开文档","技术支持","KB025 直接转人工","P1"),
+ ("G11","全部意图","繁体中文语料未采集（官网有繁中站）","—","MVP 先中英双语，繁中列二期","P2"),
+]
+
+# ---------------- Sheet3 来源与清洗规则 ----------------
+SRC_HEADERS = ["类别","内容"]
+SOURCES = [
+ ("语料来源","wellcee.com/cn/faq（中文 FAQ 13 条全文，2026-07-08 抓取）"),
+ ("语料来源","wellcee.com/en/faq（英文 FAQ 13 条全文，2026-07-08 抓取）"),
+ ("语料来源","wellcee.com/cn/about（公司介绍，2026-07-08 抓取）"),
+ ("语料来源","App 实测截图（01-调研/screenshots/app-0*.png，入口路径推断依据）"),
+ ("语料来源","App Store 用户评论（id1323479370，收费政策佐证）"),
+ ("语料来源","豆瓣避雷帖 douban.com/group/topic/324942005（举报场景素材）"),
+ ("清洗规则 1","原子化切分：一问一答为一条；复合 FAQ 拆成多条（如 FAQ#3 → KB006/007/012 三条，FAQ#4 → KB008/009 两条）——检索粒度越原子，RAG 命中越准"),
+ ("清洗规则 2","术语统一：房主→房东、房客→租客（官方 FAQ 两种叫法混用，统一后利于检索与生成一致性）"),
+ ("清洗规则 3","兜底改写：官方 FAQ 所有「请联系 hello@wellcee.com」在 Agent 场景统一改为「转人工客服」话术（邮箱兜底正是本项目要替代的现状）"),
+ ("清洗规则 4","长答案拆步骤：超过 3 个动作的答案改为 ①②③ 编号列表（如 KB004/KB020/KB022），便于对话中分步输出"),
+ ("清洗规则 5","中英同条目双列管理：同一 kb_id 一行放双语，双语同步更新为验收条件（对应 PRD 评审修订项#3）"),
+ ("清洗规则 6","假设值显式标注：官网缺失的信息以 🔶 标注+黄底，正文带「以实际为准」限定语，全部登记进缺口清单（对应 PRD 法务红线 L1）"),
+ ("统计","知识库共 27 条（官方原文/切分 18 条，假设 8 条，产品定义 1 条）；覆盖 MVP 20 个意图中除 C5 纯话术外的全部知识型意图"),
+]
+
+wb = Workbook()
+
+def style_sheet(ws, headers, rows, col_widths, yellow_col=None):
+    ws.append(headers)
+    for c in range(1, len(headers)+1):
+        cell = ws.cell(row=1, column=c)
+        cell.font = HDR_FONT
+        cell.fill = PatternFill("solid", start_color=TEAL)
+        cell.alignment = Alignment(vertical="center", horizontal="center", wrap_text=True)
+        cell.border = THIN
+    for r in rows:
+        ws.append(list(r))
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
+        is_assumption = yellow_col and ("🔶" in str(row[yellow_col-1].value or ""))
+        for cell in row:
+            cell.font = BODY_FONT
+            cell.alignment = WRAP
+            cell.border = THIN
+            if is_assumption:
+                cell.fill = PatternFill("solid", start_color=YELLOW)
+    for i, w in enumerate(col_widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.freeze_panes = "A2"
+
+ws1 = wb.active
+ws1.title = "知识库总表"
+style_sheet(ws1, KB_HEADERS, KB, [7,13,26,52,26,52,9,10,16,10,26], yellow_col=10)
+
+ws2 = wb.create_sheet("缺口清单")
+style_sheet(ws2, GAP_HEADERS, GAPS, [7,16,40,15,42,7])
+
+ws3 = wb.create_sheet("来源与清洗规则")
+style_sheet(ws3, SRC_HEADERS, SOURCES, [13,100])
+
+import os
+out = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "05-知识库", "knowledge-base.xlsx")
+os.makedirs(os.path.dirname(out), exist_ok=True)
+wb.save(out)
+print("saved:", out, "| KB entries:", len(KB), "| gaps:", len(GAPS))
